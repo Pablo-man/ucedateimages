@@ -20,3 +20,4 @@ jobs:
       ec2_host: ${{ secrets.EC2_HOST_USERIMAGES }}
       ec2_key: ${{ secrets.EC2_KEY_USERIMAGES }}
       docker_username: ${{ secrets.DOCKER_USERNAME }}
+      repository_name: ${{ secrets.DOCKER_REPOSITORY_USERIMAGES }}

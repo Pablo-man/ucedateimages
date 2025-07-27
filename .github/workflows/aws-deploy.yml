@@ -9,6 +9,8 @@ on:
         required: true
       ec2_key:
         required: true
+      repository_name:
+        required: true
 
 jobs:
   connect_update:
@@ -48,18 +50,18 @@ jobs:
           fi
 
           echo "📦 Eliminando imagen anterior si existe..."
-          if sudo docker images --format '{{.Repository}}:{{.Tag}}' | grep -q "^${{ secrets.docker_username }}/userimages:latest$"; then
-            sudo docker rmi ${{ secrets.docker_username }}/userimages:latest || true
+          if sudo docker images --format '{{.Repository}}:{{.Tag}}' | grep -q "^${{ secrets.docker_username }}/${{secrets.repository_name}}:latest$"; then
+            sudo docker rmi ${{ secrets.docker_username }}/${{secrets.repository_name}}:latest || true
           fi
 
           echo "⬇️ Descargando la última imagen..."
-          sudo docker pull ${{ secrets.docker_username }}/userimages:latest
+          sudo docker pull ${{ secrets.docker_username }}/${{secrets.repository_name}}:latest
 
           echo "🚀 Ejecutando nuevo contenedor..."
           if [ -f /home/ubuntu/.env ]; then
             echo "Usando archivo .env para configuración de entorno."
-            sudo docker run --name userimages -d --env-file /home/ubuntu/.env -p 3000:3000 ${{ secrets. docker_username }}/userimages:latest
+            sudo docker run --name userimages -d --env-file /home/ubuntu/.env -p 3000:3000 ${{ secrets. docker_username }}/${{secrets.repository_name}}:latest
           else
             echo "No se encontró archivo .env. Ejecutando sin variables de entorno externas."
-            sudo docker run --name userimages -d -p 3000:3000 ${{ secrets.docker_username }}/userimages:latest
+            sudo docker run --name userimages -d -p 3000:3000 ${{ secrets.docker_username }}/${{secrets.repository_name}}:latest
           fi
