@@ -1,0 +1,22 @@
+name: Registry image
+
+on:
+  push:
+    branches: ["main"]
+
+jobs:
+  login-push-userimages:
+    uses: ./.github/workflows/docker-login.yml
+    secrets:
+      docker_password: ${{ secrets.DOCKER_PASSWORD }}
+      docker_username: ${{ secrets.DOCKER_USERNAME }}
+      repository_name: ${{ secrets.DOCKER_REPOSITORY_USERIMAGES }}
+
+  ec2-cd-userimages:
+    needs: [login-push-userimages]
+    if: always()
+    uses: ./.github/workflows/aws-deploy.yml
+    secrets:
+      ec2_host: ${{ secrets.EC2_HOST_USERIMAGES }}
+      ec2_key: ${{ secrets.EC2_KEY_USERIMAGES }}
+      docker_username: ${{ secrets.DOCKER_USERNAME }}

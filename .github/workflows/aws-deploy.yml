@@ -1,0 +1,65 @@
+name: Docker Setup & Update & Run new images
+
+on:
+  workflow_call:
+    secrets:
+      docker_username:
+        required: true
+      ec2_host:
+        required: true
+      ec2_key:
+        required: true
+
+jobs:
+  connect_update:
+    runs-on: ubuntu-latest
+    steps:
+    
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: SSH into EC2 and Deploy Application
+      uses: appleboy/ssh-action@v1.2.0
+      with:
+        host: ${{ secrets.ec2_host }}
+        username: ubuntu
+        key: ${{ secrets.ec2_key }}
+        script: |
+          if ! command -v docker &> /dev/null; then
+            sudo apt update
+            sudo apt install -y docker.io
+            sudo systemctl start docker
+            sudo systemctl enable docker
+            sudo usermod -aG docker $USER
+            sudo systemctl restart docker
+          else
+            echo "Docker ya está instalado."
+          fi
+
+          echo "✅ Verificando estado del servicio Docker..."
+          if ! sudo systemctl is-active --quiet docker; then
+            sudo systemctl start docker
+          fi
+
+          echo "🧹 Limpiando contenedores anteriores..."
+          if docker ps -a --format '{{.Names}}' | grep -q "^userimages$"; then
+            docker stop userimages || true
+            docker rm userimages || true
+          fi
+
+          echo "📦 Eliminando imagen anterior si existe..."
+          if docker images --format '{{.Repository}}:{{.Tag}}' | grep -q "^${{ secrets.docker_username }}/userimages:latest$"; then
+            docker rmi ${{ secrets.docker_username }}/userimages:latest || true
+          fi
+
+          echo "⬇️ Descargando la última imagen..."
+          docker pull ${{ secrets.docker_username }}/userimages:latest
+
+          echo "🚀 Ejecutando nuevo contenedor..."
+          if [ -f /home/ubuntu/.env ]; then
+            echo "Usando archivo .env para configuración de entorno."
+            docker run --name userimages -d --env-file /home/ubuntu/.env -p 3000:3000 ${{ secrets.docker_username }}/userimages:latest
+          else
+            echo "No se encontró archivo .env. Ejecutando sin variables de entorno externas."
+            docker run --name userimages -d -p 3000:3000 ${{ secrets.docker_username }}/userimages:latest
+          fi
