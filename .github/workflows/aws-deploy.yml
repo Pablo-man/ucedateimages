@@ -58,7 +58,7 @@ jobs:
           echo "🚀 Ejecutando nuevo contenedor..."
           if [ -f /home/ubuntu/.env ]; then
             echo "Usando archivo .env para configuración de entorno."
-            sudo docker run --name userimages -d --env-file /home/ubuntu/.env -p 3000:3000 ${{ secrets.sudo docker_username }}/userimages:latest
+            sudo docker run --name userimages -d --env-file /home/ubuntu/.env -p 3000:3000 ${{ secrets. docker_username }}/userimages:latest
           else
             echo "No se encontró archivo .env. Ejecutando sin variables de entorno externas."
             sudo docker run --name userimages -d -p 3000:3000 ${{ secrets.docker_username }}/userimages:latest
